@@ -1,4 +1,4 @@
-package com.example.examplemod;
+package cn.ahmisty.minecraft.xian;
 
 import net.minecraft.client.Minecraft;
 import net.neoforged.api.distmarker.Dist;

@@ -26,7 +26,7 @@ import java.util.*;
         ImmediateWindowProvider.class
 })
 public class EarlyDisplay implements GraphicsBootstrapper, ImmediateWindowProvider, IOrderedProvider {
-    public static final String NAME = "xian";
+    public static final String NAME = "cn/ahmisty/minecraft/xian";
     private static final Logger LOGGER = LoggerFactory.getLogger(NAME);
     private static ImmediateWindowProvider PROVIDER;
 
