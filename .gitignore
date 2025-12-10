@@ -1,0 +1,33 @@
+# eclipse
+bin
+*.launch
+.settings
+.metadata
+.classpath
+.project
+
+# vscode
+.vscode
+
+# idea
+out
+*.ipr
+*.iws
+*.iml
+.idea/*
+!.idea/icon.svg
+!.idea/encodings.xml
+!.idea/project.xml
+!.idea/dictionaries
+
+# gradle
+build
+.gradle
+
+# other
+eclipse
+run
+runs
+run-data
+
+repo

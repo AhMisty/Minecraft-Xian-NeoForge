@@ -1,0 +1,6 @@
+<svg viewBox="0,0,600,600" clip-rule="evenodd" fill-rule="evenodd" image-rendering="optimizeQuality" shape-rendering="geometricPrecision" text-rendering="geometricPrecision" xmlns="http://www.w3.org/2000/svg">
+	<path fill="rgba(255,255,255,0.9)" d="M300,0,A300,300,0,0,1,300,600,A200,200,0,0,0,300,200,A100,100,0,0,0,300,400,A200,200,0,0,1,300,0,Z" />
+	<path fill="rgba(0,0,0,0.9)" d="M300,600,A300,300,0,0,1,300,0,A200,200,0,0,0,300,400,A100,100,0,0,0,300,200,A200,200,0,0,1,300,600,Z" />
+	<path fill="transparent" stroke="rgba(128,128,128,1)" stroke-width="6" d="M300,3,A297,297,0,0,1,300,597,A297,297,0,0,1,300,3" />
+	<path fill="transparent" stroke="rgba(128,128,128,1)" stroke-width="4" d="M300,202,A98,98,0,0,1,300,398,A98,98,0,0,1,300,202" />
+</svg>
