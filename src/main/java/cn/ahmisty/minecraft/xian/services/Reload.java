@@ -13,9 +13,7 @@ import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.util.Set;
 
-@AutoService({
-        IModFileCandidateLocator.class
-})
+@AutoService({IModFileCandidateLocator.class})
 public class Reload implements IModFileCandidateLocator, IOrderedProvider {
     public static final String NAME = "xian";
     private static final Logger LOGGER = LoggerFactory.getLogger(NAME);

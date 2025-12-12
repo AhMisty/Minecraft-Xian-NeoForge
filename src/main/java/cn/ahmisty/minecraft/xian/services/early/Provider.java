@@ -19,10 +19,10 @@ public class Provider implements ImmediateWindowProvider, IOrderedProvider {
 
     @Override
     public String name () {
-        if (ProviderBootstrapper.PROVIDER == null) {
+        if (Bootstrapper.PROVIDER == null) {
             return NAME;
         } else {
-            return ProviderBootstrapper.PROVIDER.name();
+            return Bootstrapper.PROVIDER.name();
         }
     }
 
@@ -31,39 +31,39 @@ public class Provider implements ImmediateWindowProvider, IOrderedProvider {
 
     @Override
     public void initialize(ProgramArgs args) {
-        LOGGER.info("Use provider: {}", ProviderBootstrapper.PROVIDER.name());
-        ProviderBootstrapper.PROVIDER.initialize(args);
+        LOGGER.info("Use provider: {}", Bootstrapper.PROVIDER.name());
+        Bootstrapper.PROVIDER.initialize(args);
     }
     @Override
     public void setMinecraftVersion(String version) {
-        ProviderBootstrapper.PROVIDER.setMinecraftVersion(version);
+        Bootstrapper.PROVIDER.setMinecraftVersion(version);
     }
     @Override
     public void setNeoForgeVersion(String version) {
-        ProviderBootstrapper.PROVIDER.setNeoForgeVersion(version);
+        Bootstrapper.PROVIDER.setNeoForgeVersion(version);
     }
     @Override
     public void crash(String message) {
-        ProviderBootstrapper.PROVIDER.crash(message);
+        Bootstrapper.PROVIDER.crash(message);
     }
     @Override
     public void displayFatalErrorAndExit(List<ModLoadingIssue> issues, @Nullable Path modsFolder, @Nullable Path logFile, @Nullable Path crashReportFile) {
-        ProviderBootstrapper.PROVIDER.displayFatalErrorAndExit(issues, modsFolder, logFile, crashReportFile);
+        Bootstrapper.PROVIDER.displayFatalErrorAndExit(issues, modsFolder, logFile, crashReportFile);
     }
     @Override
     public long takeOverGlfwWindow() {
-        return ProviderBootstrapper.PROVIDER.takeOverGlfwWindow();
+        return Bootstrapper.PROVIDER.takeOverGlfwWindow();
     }
     @Override
     public void periodicTick() {
-        ProviderBootstrapper.PROVIDER.periodicTick();
+        Bootstrapper.PROVIDER.periodicTick();
     }
     @Override
     public void updateProgress(String label) {
-        ProviderBootstrapper.PROVIDER.updateProgress(label);
+        Bootstrapper.PROVIDER.updateProgress(label);
     }
     @Override
     public void completeProgress() {
-        ProviderBootstrapper.PROVIDER.completeProgress();
+        Bootstrapper.PROVIDER.completeProgress();
     }
 }

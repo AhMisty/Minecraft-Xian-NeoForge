@@ -16,8 +16,8 @@ import java.util.Objects;
 import java.util.ServiceLoader;
 
 @AutoService({GraphicsBootstrapper.class})
-public class ProviderBootstrapper implements GraphicsBootstrapper, IOrderedProvider {
-    private static final String NAME = "Xian/ProviderBootstrapper";
+public class Bootstrapper implements GraphicsBootstrapper, IOrderedProvider {
+    private static final String NAME = "Xian/Bootstrapper";
     private static final Logger LOGGER = LoggerFactory.getLogger(NAME);
     public static ImmediateWindowProvider PROVIDER;
 
