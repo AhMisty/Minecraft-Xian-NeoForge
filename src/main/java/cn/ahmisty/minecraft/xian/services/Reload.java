@@ -8,6 +8,8 @@ import net.neoforged.neoforgespi.locating.IModFileCandidateLocator;
 import net.neoforged.neoforgespi.locating.IOrderedProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
 
 import java.lang.reflect.Field;
 import java.nio.file.Path;
@@ -15,7 +17,8 @@ import java.util.Set;
 
 @AutoService({IModFileCandidateLocator.class})
 public class Reload implements IModFileCandidateLocator, IOrderedProvider {
-    public static final String NAME = "xian";
+    public static final String NAME = "仙";
+    private static final Marker LOGGERMARKER = MarkerFactory.getMarker("Reload");
     private static final Logger LOGGER = LoggerFactory.getLogger(NAME);
 
     @Override
@@ -34,10 +37,10 @@ public class Reload implements IModFileCandidateLocator, IOrderedProvider {
             Set<Path> locatedPaths = (Set<Path>) locatedPathsField.get(loader);
             boolean removed = locatedPaths.remove(path);
             if (removed) {
-                LOGGER.debug("Successfully remove locatedPath: {}", path);
+                LOGGER.debug(LOGGERMARKER, "Successfully remove locatedPath: {}", path);
             }
         } catch (Exception e) {
-            LOGGER.error("Could not remove locatedPath.", e);
+            LOGGER.error(LOGGERMARKER, "Could not remove locatedPath.", e);
         }
     }
 }

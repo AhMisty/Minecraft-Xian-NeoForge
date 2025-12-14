@@ -1,4 +1,4 @@
-package cn.ahmisty.minecraft.xian.services.early;
+package cn.ahmisty.minecraft.xian.services;
 
 import com.google.auto.service.AutoService;
 import net.bytebuddy.ByteBuddy;
@@ -15,6 +15,8 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,7 +25,8 @@ import java.nio.IntBuffer;
 
 @AutoService({GraphicsBootstrapper.class})
 public class GLFW implements GraphicsBootstrapper, IOrderedProvider {
-    public static final String NAME = "Xian/GLFW";
+    public static final String NAME = "仙";
+    private static final Marker LOGGERMARKER = MarkerFactory.getMarker("GLFW");
     private static final Logger LOGGER = LoggerFactory.getLogger(NAME);
 
     @Override
@@ -61,13 +64,13 @@ public class GLFW implements GraphicsBootstrapper, IOrderedProvider {
     public static class glfwWindowHintStringAdvice {
         @Advice.OnMethodEnter
         public static void enter(@Advice.Argument(value = 1, readOnly = false) CharSequence value) {
-            value = "Xian: " + value;
+            value = "仙: " + value;
         }
     }
     public static class GlfwCreateWindowAdvice {
         @Advice.OnMethodEnter
         public static void enter(@Advice.Argument(value = 2, readOnly = false) CharSequence title) {
-            title = "Xian: " + title;
+            title = "仙: " + title;
         }
     }
     public static class GlfwSetWindowIconAdvice {
@@ -79,7 +82,7 @@ public class GLFW implements GraphicsBootstrapper, IOrderedProvider {
     public static class GlfwSetWindowTitleAdvice {
         @Advice.OnMethodEnter
         public static void enter(@Advice.Argument(value = 1, readOnly = false) CharSequence title) {
-            String prefix = "Xian: ";
+            String prefix = "仙: ";
             if (!title.toString().startsWith(prefix)) {
                 title = prefix + title;
             }
@@ -99,7 +102,7 @@ public class GLFW implements GraphicsBootstrapper, IOrderedProvider {
             try (MemoryStack stack = MemoryStack.stackPush()) {
                 ByteBuffer rawPngData = loadResourceToByteBuffer(overlayPngPath);
                 if (rawPngData == null) {
-                    LOGGER.error("Could not find icon resource: {}", overlayPngPath);
+                    LOGGER.error(LOGGERMARKER, "Could not find icon resource: {}", overlayPngPath);
                     return;
                 }
                 IntBuffer w = stack.mallocInt(1);
@@ -107,7 +110,7 @@ public class GLFW implements GraphicsBootstrapper, IOrderedProvider {
                 IntBuffer comp = stack.mallocInt(1);
                 overlayImage = STBImage.stbi_load_from_memory(rawPngData, w, h, comp, 4);
                 if (overlayImage == null) {
-                    LOGGER.error("Failed to load overlay image: {}", STBImage.stbi_failure_reason());
+                    LOGGER.error(LOGGERMARKER, "Failed to load overlay image: {}", STBImage.stbi_failure_reason());
                     MemoryUtil.memFree(rawPngData);
                     return;
                 }
@@ -124,8 +127,8 @@ public class GLFW implements GraphicsBootstrapper, IOrderedProvider {
                     ByteBuffer basePixels = icon.pixels(capacity);
 
                     // 设定右下角小图标的大小，例如原图标的 40% ~ 50%
-                    int badgeW = baseW * 2 / 5;
-                    int badgeH = baseH * 2 / 5;
+                    int badgeW = baseW / 2;
+                    int badgeH = baseH / 2;
                     // 确保至少是 1x1
                     if (badgeW < 1) badgeW = 1;
                     if (badgeH < 1) badgeH = 1;

@@ -8,6 +8,8 @@ import net.neoforged.neoforgespi.earlywindow.ImmediateWindowProvider;
 import net.neoforged.neoforgespi.locating.IOrderedProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
 
 import java.lang.reflect.Field;
 import java.util.Comparator;
@@ -17,7 +19,8 @@ import java.util.ServiceLoader;
 
 @AutoService({GraphicsBootstrapper.class})
 public class Bootstrapper implements GraphicsBootstrapper, IOrderedProvider {
-    private static final String NAME = "Xian/Bootstrapper";
+    private static final String NAME = "仙";
+    private static final Marker LOGGERMARKER = MarkerFactory.getMarker("Early/Bootstrapper");
     private static final Logger LOGGER = LoggerFactory.getLogger(NAME);
     public static ImmediateWindowProvider PROVIDER;
 
@@ -44,10 +47,10 @@ public class Bootstrapper implements GraphicsBootstrapper, IOrderedProvider {
                 .max(Comparator.comparingInt(p -> (p instanceof IOrderedProvider op) ? op.getPriority() : 0))
                 .orElse(null);
         if (PROVIDER != null) {
-            LOGGER.info("Successfully found provider: {}", PROVIDER.name());
+            LOGGER.info(LOGGERMARKER, "Successfully found provider: {}", PROVIDER.name());
         } else {
             String message = "Could not find provider: " + ProviderName;
-            LOGGER.error(message);
+            LOGGER.error(LOGGERMARKER, message);
             throw new RuntimeException(message);
         }
     }
@@ -58,11 +61,11 @@ public class Bootstrapper implements GraphicsBootstrapper, IOrderedProvider {
             field.setAccessible(true);
             Deque<?> meters = (Deque<?>) field.get(null);
             if (!meters.isEmpty()) {
-                LOGGER.info("Detected {} ghost progress bar(s) created by FML discovery. Clearing...", meters.size());
+                LOGGER.info(LOGGERMARKER, "Detected {} ghost progress bar(s) created by FML discovery. Clearing...", meters.size());
                 meters.clear();
             }
         } catch (Exception e) {
-            LOGGER.error("Failed to clean ghost progress bars!", e);
+            LOGGER.error(LOGGERMARKER, "Failed to clean ghost progress bars!", e);
         }
     }
 }

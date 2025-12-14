@@ -8,13 +8,16 @@ import net.neoforged.neoforgespi.locating.IOrderedProvider;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
 
 import java.nio.file.Path;
 import java.util.List;
 
 @AutoService({ImmediateWindowProvider.class})
 public class Provider implements ImmediateWindowProvider, IOrderedProvider {
-    private static final String NAME = "Xian/Provider";
+    private static final String NAME = "仙";
+    private static final Marker LOGGERMARKER = MarkerFactory.getMarker("Early/Provider");
     private static final Logger LOGGER = LoggerFactory.getLogger(NAME);
 
     @Override
@@ -31,7 +34,7 @@ public class Provider implements ImmediateWindowProvider, IOrderedProvider {
 
     @Override
     public void initialize(ProgramArgs args) {
-        LOGGER.info("Use provider: {}", Bootstrapper.PROVIDER.name());
+        LOGGER.info(LOGGERMARKER, "Use provider: {}", Bootstrapper.PROVIDER.name());
         Bootstrapper.PROVIDER.initialize(args);
     }
     @Override
