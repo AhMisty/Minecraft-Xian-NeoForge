@@ -36,6 +36,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TZ: 'Asia/Shanghai'
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
         run: |
           DATE=$(date +'%Y%m%d')
           COMMIT_SHORT=$(echo ${{ github.sha }} | cut -c 1-7)
