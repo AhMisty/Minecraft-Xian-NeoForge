@@ -1,6 +1,13 @@
 name: Build
 
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 16 * * *'
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -23,3 +30,25 @@ jobs:
 
       - name: Build with Gradle
         run: ./gradlew build
+
+      - name: Process Nightly Release
+#        if: github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TZ: 'Asia/Shanghai'
+        run: |
+          DATE=$(date +'%Y%m%d')
+          COMMIT_SHORT=$(echo ${{ github.sha }} | cut -c 1-7)
+          echo "Processing nightly build for date: $DATE"
+          cd build/libs
+          for file in *.jar; do
+            if [[ "$file" == *"-nightly-"* ]]; then continue; fi
+            mv "$file" "${file%.*}-nightly-${DATE}.jar"
+          done
+          ls -lh
+          gh release delete nightly --cleanup-tag --yes || true
+          gh release create nightly ./*-nightly-*.jar \
+            --title "Nightly Build ($DATE)" \
+            --notes "Auto-built from commit $COMMIT_SHORT at $(date +'%Y-%m-%d %H:%M:%S')" \
+            --prerelease \
+            --target ${{ github.sha }}
