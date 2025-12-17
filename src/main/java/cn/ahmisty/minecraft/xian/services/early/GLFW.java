@@ -1,4 +1,4 @@
-package cn.ahmisty.minecraft.xian.services;
+package cn.ahmisty.minecraft.xian.services.early;
 
 import com.google.auto.service.AutoService;
 import net.bytebuddy.ByteBuddy;
@@ -154,9 +154,7 @@ public class GLFW implements GraphicsBootstrapper, IOrderedProvider {
                     }
                 }
             } finally {
-                if (overlayImage != null) {
-                    STBImage.stbi_image_free(overlayImage);
-                }
+                STBImage.stbi_image_free(overlayImage);
             }
         }
 
@@ -169,8 +167,8 @@ public class GLFW implements GraphicsBootstrapper, IOrderedProvider {
                 buffer.put(bytes);
                 buffer.flip();
                 return buffer;
-            } catch (IOException e) {
-                e.printStackTrace();
+            } catch (IOException error) {
+                LOGGER.error(LOGGERMARKER,"Failed to load Resource", error);
                 return null;
             }
         }
