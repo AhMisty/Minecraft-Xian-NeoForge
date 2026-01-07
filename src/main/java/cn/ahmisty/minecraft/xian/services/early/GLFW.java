@@ -30,7 +30,7 @@ import java.nio.IntBuffer;
 import java.nio.file.Path;
 import java.security.ProtectionDomain;
 
-@AutoService({GraphicsBootstrapper.class})
+//@AutoService({GraphicsBootstrapper.class})
 public class GLFW implements GraphicsBootstrapper, IOrderedProvider {
     public static final String NAME = "仙";
     private static final String TITLE_PREFIX = NAME + ": ";

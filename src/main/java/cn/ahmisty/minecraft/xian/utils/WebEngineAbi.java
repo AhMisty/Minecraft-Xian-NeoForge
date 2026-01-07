@@ -12,7 +12,7 @@ import java.lang.invoke.MethodHandle;
 import java.util.Objects;
 
 public final class WebEngineAbi {
-    public static final String LIB_NAME = "web_engine";
+    public static final String LIB_NAME = "xian_web_engine";
 
     public static final int INPUT_KIND_MOUSE_MOVE = 1;
     public static final int INPUT_KIND_MOUSE_BUTTON = 2;
