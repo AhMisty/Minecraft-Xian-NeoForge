@@ -19,7 +19,6 @@ public class Provider implements ImmediateWindowProvider, IOrderedProvider {
     private static final String NAME = "仙";
     private static final Marker LOGGERMARKER = MarkerFactory.getMarker("Early/Provider");
     private static final Logger LOGGER = LoggerFactory.getLogger(NAME);
-    public static long WINDOW = 0;
 
     @Override
     public String name () {
@@ -56,8 +55,9 @@ public class Provider implements ImmediateWindowProvider, IOrderedProvider {
     }
     @Override
     public long takeOverGlfwWindow() {
-        WINDOW = Bootstrapper.PROVIDER.takeOverGlfwWindow();
-        return WINDOW;
+        long glfwWindow = Bootstrapper.PROVIDER.takeOverGlfwWindow();
+        System.setProperty("GLFW_WINDOW_DEFAULT", String.valueOf(glfwWindow));
+        return glfwWindow;
     }
     @Override
     public void periodicTick() {
