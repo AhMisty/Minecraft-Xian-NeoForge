@@ -15,11 +15,16 @@ public class ModListScreenMixin_InfoPanel {
     @Unique
     private static final Logger ModListScreen$LOGGER = LoggerFactory.getLogger("xian");
 
-    // 关键点 2: remap = false (因为这是 NeoForge 自己的方法，不是 Minecraft 原生混淆方法)
-    // 关键点 3: 参数必须完全匹配 InfoPanel.drawPanel
-    @Inject(method = "drawPanel", at = @At("RETURN"), remap = false)
+    @Inject(method = "drawPanel", at = @At("HEAD"), remap = false, cancellable = true)
     private void onDrawPanel(GuiGraphics guiGraphics, int entryRight, int relativeY, int mouseX, int mouseY, CallbackInfo ci) {
-        // 测试绘制：在左上角画一个红色的 "Mixin Works"
-//        guiGraphics.drawString(net.minecraft.client.Minecraft.getInstance().font, "Mixin Works!", entryRight - 50, relativeY, 0xFFFF0000);
+
+        // 1. 在这里写你自己的逻辑
+        ModListScreen$LOGGER.info("正在执行自定义的 drawPanel 逻辑");
+
+        // 示例：在这里自己绘制一些东西
+        // guiGraphics.drawString(...)
+
+        // 2. 执行取消，这会阻止原版代码运行 (相当于 return)
+        ci.cancel();
     }
 }
