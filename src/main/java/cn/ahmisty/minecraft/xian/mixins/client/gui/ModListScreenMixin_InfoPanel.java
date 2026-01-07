@@ -1,4 +1,4 @@
-package cn.ahmisty.minecraft.xian.mixins.client;
+package cn.ahmisty.minecraft.xian.mixins.client.gui;
 
 import net.minecraft.client.gui.GuiGraphics;
 import org.slf4j.Logger;

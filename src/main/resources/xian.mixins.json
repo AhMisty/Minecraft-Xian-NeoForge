@@ -6,7 +6,7 @@
   "mixins": [
   ],
   "client": [
-    "client.ModListScreenMixin_InfoPanel"
+    "client.gui.ModListScreenMixin_InfoPanel"
   ],
   "injectors": {
     "defaultRequire": 1
