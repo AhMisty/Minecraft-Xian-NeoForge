@@ -1,6 +1,7 @@
-package cn.ahmisty.minecraft.xian.ffi.web.engine;
+package cn.ahmisty.minecraft.xian.ffi.web;
 
 import cn.ahmisty.minecraft.xian.ffi.Types;
+import cn.ahmisty.minecraft.xian.ffi.web.engine.Abi;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemoryLayout;
@@ -8,6 +9,10 @@ import java.lang.foreign.MemorySegment;
 import java.nio.charset.StandardCharsets;
 
 public final class View implements AutoCloseable {
+    public static final int FLAG_UNSAFE_NO_CONSUMER_FENCE = 1 << 0;
+    public static final int FLAG_INPUT_SINGLE_PRODUCER = 1 << 1;
+    public static final int FLAG_UNSAFE_NO_PRODUCER_FENCE = 1 << 2;
+
     private static final long FRAME_SLOT_OFFSET =
             Abi.FRAME.byteOffset(MemoryLayout.PathElement.groupElement("slot"));
     private static final long FRAME_TEXTURE_ID_OFFSET =

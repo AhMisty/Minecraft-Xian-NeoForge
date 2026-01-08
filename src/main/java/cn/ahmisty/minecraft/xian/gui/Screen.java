@@ -1,12 +1,13 @@
 package cn.ahmisty.minecraft.xian.gui;
 
-import cn.ahmisty.minecraft.xian.ffi.web.engine.Engine;
-import cn.ahmisty.minecraft.xian.ffi.web.engine.View;
+import cn.ahmisty.minecraft.xian.ffi.web.Engine;
+import cn.ahmisty.minecraft.xian.ffi.web.View;
 import net.minecraft.client.Minecraft;
 
 public final class Screen implements AutoCloseable {
-    public static final int ENGINE_FLAGS_MAX_PERF = Engine.FLAG_NO_PARK;
-    public static final int VIEW_FLAGS_MAX_PERF = Engine.VIEW_FLAG_INPUT_SINGLE_PRODUCER;
+    public static final Engine ENGINE = new Engine(new Engine.Config()
+            .threadPoolCap(0)
+            .engineFlags(Engine.FLAG_NO_PARK));
 
     private static final class EngineHolder {
         private static final Engine INSTANCE = createEngine();
