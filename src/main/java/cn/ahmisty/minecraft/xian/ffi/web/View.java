@@ -9,9 +9,9 @@ import java.lang.foreign.MemorySegment;
 import java.nio.charset.StandardCharsets;
 
 public final class View implements AutoCloseable {
-    public static final int FLAG_UNSAFE_NO_CONSUMER_FENCE = 1 << 0;
-    public static final int FLAG_INPUT_SINGLE_PRODUCER = 1 << 1;
-    public static final int FLAG_UNSAFE_NO_PRODUCER_FENCE = 1 << 2;
+    public static final int FLAG_UNSAFE_NO_CONSUMER_FENCE = Abi.ViewFlag.UNSAFE_NO_CONSUMER_FENCE;
+    public static final int FLAG_INPUT_SINGLE_PRODUCER = Abi.ViewFlag.INPUT_SINGLE_PRODUCER;
+    public static final int FLAG_UNSAFE_NO_PRODUCER_FENCE = Abi.ViewFlag.UNSAFE_NO_PRODUCER_FENCE;
 
     private static final long FRAME_SLOT_OFFSET =
             Abi.FRAME.byteOffset(MemoryLayout.PathElement.groupElement("slot"));

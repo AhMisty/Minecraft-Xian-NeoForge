@@ -5,6 +5,9 @@ import cn.ahmisty.minecraft.xian.ffi.web.View;
 import net.minecraft.client.Minecraft;
 
 public final class Screen implements AutoCloseable {
+    private static final int ENGINE_FLAGS_MAX_PERF = Engine.FLAG_NO_PARK;
+    private static final int VIEW_FLAGS_MAX_PERF = View.FLAG_INPUT_SINGLE_PRODUCER;
+
     public static final Engine ENGINE = new Engine(new Engine.Config()
             .threadPoolCap(0)
             .engineFlags(Engine.FLAG_NO_PARK));

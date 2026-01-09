@@ -5,11 +5,51 @@ import cn.ahmisty.minecraft.xian.ffi.Types;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.MemoryLayout;
+import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
 
 public final class Abi {
     public static final Arena ARENA = Arena.global();
     private static final Library LIBRARY = new Library("xian_web_engine", ARENA);
+
+    /**
+     * Engine 创建 flags（对应 Rust 侧的 `engine_flags`）。
+     */
+    public static final class EngineFlag {
+        /**
+         * `XIAN_WEB_ENGINE_FLAG_NO_PARK`：Servo 线程 idle 时不 park（busy-spin）。
+         * 低延迟但会显著增加空闲 CPU 占用。
+         */
+        public static final int NO_PARK = 1 << 0;
+
+        private EngineFlag() {
+        }
+    }
+
+    /**
+     * View 创建 flags（对应 Rust 侧的 `view_flags`）。
+     */
+    public static final class ViewFlag {
+        /**
+         * `XIAN_WEB_ENGINE_VIEW_FLAG_UNSAFE_NO_CONSUMER_FENCE`：忽略 consumer fence（更快但不安全）。
+         */
+        public static final int UNSAFE_NO_CONSUMER_FENCE = 1 << 0;
+
+        /**
+         * `XIAN_WEB_ENGINE_VIEW_FLAG_INPUT_SINGLE_PRODUCER`：宿主保证只有一个线程发送输入（更快 push 路径）。
+         * 违反该约定属于未定义行为。
+         */
+        public static final int INPUT_SINGLE_PRODUCER = 1 << 1;
+
+        /**
+         * `XIAN_WEB_ENGINE_VIEW_FLAG_UNSAFE_NO_PRODUCER_FENCE`：不提供 producer fence（更快但不安全）。
+         */
+        public static final int UNSAFE_NO_PRODUCER_FENCE = 1 << 2;
+
+        private ViewFlag() {
+        }
+    }
 
     public static final class Native {
         public static final MethodHandle abi_version = LIBRARY.loadFunctionCritical("xian_web_engine_abi_version", FunctionDescriptor.of(Types.U32));
@@ -31,6 +71,85 @@ public final class Abi {
 
         public static final MethodHandle views_acquire_frames = LIBRARY.loadFunctionCritical("xian_web_engine_views_acquire_frames", FunctionDescriptor.of(Types.U32, Types.U64, Types.U64, Types.U64, Types.U32));
         public static final MethodHandle views_release_frames = LIBRARY.loadFunctionCritical("xian_web_engine_views_release_frames", FunctionDescriptor.ofVoid(Types.U64, Types.U64, Types.U64, Types.U32));
+
+        /**
+         * `XIAN_WEB_ENGINE_FLAG_NO_PARK`：Servo 线程 idle 时不 park（busy-spin）。
+         * 低延迟但会显著增加空闲 CPU 占用。
+         */
+        public static final int NO_PARK = 1 << 0;
+
+        /**
+         * `XIAN_WEB_ENGINE_VIEW_FLAG_UNSAFE_NO_CONSUMER_FENCE`：忽略 consumer fence（更快但不安全）。
+         */
+        public static final int UNSAFE_NO_CONSUMER_FENCE = 1 << 0;
+
+        /**
+         * `XIAN_WEB_ENGINE_VIEW_FLAG_INPUT_SINGLE_PRODUCER`：宿主保证只有一个线程发送输入（更快 push 路径）。
+         * 违反该约定属于未定义行为。
+         */
+        public static final int INPUT_SINGLE_PRODUCER = 1 << 1;
+
+        /**
+         * `XIAN_WEB_ENGINE_VIEW_FLAG_UNSAFE_NO_PRODUCER_FENCE`：不提供 producer fence（更快但不安全）。
+         */
+        public static final int UNSAFE_NO_PRODUCER_FENCE = 1 << 2;
+
+        public static final MemoryLayout GLFW_API = MemoryLayout.structLayout(
+                ValueLayout.ADDRESS.withName("glfw_get_proc_address"),
+                ValueLayout.ADDRESS.withName("glfw_make_context_current"),
+                ValueLayout.ADDRESS.withName("glfw_default_window_hints"),
+                ValueLayout.ADDRESS.withName("glfw_window_hint"),
+                ValueLayout.ADDRESS.withName("glfw_get_window_attrib"),
+                ValueLayout.ADDRESS.withName("glfw_create_window"),
+                ValueLayout.ADDRESS.withName("glfw_destroy_window")
+        );
+        public static final MemoryLayout CONFIG = MemoryLayout.structLayout(
+                ValueLayout.ADDRESS.withName("glfw_shared_window"),
+                GLFW_API.withName("glfw_api"),
+                ValueLayout.ADDRESS.withName("resources_dir"),
+                ValueLayout.ADDRESS.withName("config_dir"),
+                ValueLayout.JAVA_INT.withName("default_width"),
+                ValueLayout.JAVA_INT.withName("default_height"),
+                ValueLayout.JAVA_INT.withName("thread_pool_cap"),
+                ValueLayout.JAVA_INT.withName("engine_flags")
+        );
+        public static final MemoryLayout VIEW_CONFIG = MemoryLayout.structLayout(
+                ValueLayout.ADDRESS.withName("engine"),
+                ValueLayout.JAVA_INT.withName("width"),
+                ValueLayout.JAVA_INT.withName("height"),
+                ValueLayout.JAVA_INT.withName("target_fps"),
+                ValueLayout.JAVA_INT.withName("view_flags")
+        );
+        public static final MemoryLayout FRAME = MemoryLayout.structLayout(
+                ValueLayout.JAVA_LONG.withName("producer_fence"),
+                ValueLayout.JAVA_INT.withName("texture_id"),
+                ValueLayout.JAVA_INT.withName("slot"),
+                ValueLayout.JAVA_INT.withName("width"),
+                ValueLayout.JAVA_INT.withName("height")
+        );
+        public static final MemoryLayout INPUT_EVENT = MemoryLayout.structLayout(
+                ValueLayout.JAVA_INT.withName("kind"),
+                ValueLayout.JAVA_FLOAT.withName("x"),
+                ValueLayout.JAVA_FLOAT.withName("y"),
+                ValueLayout.JAVA_INT.withName("modifiers"),
+
+                ValueLayout.JAVA_INT.withName("mouse_button"),
+                ValueLayout.JAVA_INT.withName("mouse_action"),
+
+                ValueLayout.JAVA_DOUBLE.withName("wheel_delta_x"),
+                ValueLayout.JAVA_DOUBLE.withName("wheel_delta_y"),
+                ValueLayout.JAVA_DOUBLE.withName("wheel_delta_z"),
+                ValueLayout.JAVA_INT.withName("wheel_mode"),
+
+                ValueLayout.JAVA_INT.withName("key_state"),
+                ValueLayout.JAVA_INT.withName("key_location"),
+                ValueLayout.JAVA_INT.withName("repeat"),
+                ValueLayout.JAVA_INT.withName("is_composing"),
+                ValueLayout.JAVA_INT.withName("key_codepoint"),
+                ValueLayout.JAVA_INT.withName("glfw_key")
+        );
+
+        private Native() {}
     }
 
     /**
@@ -200,23 +319,6 @@ public final class Abi {
             throw new RuntimeException(error);
         }
     }
-
-
-//    public static final MemorySegment DEFAULT_GLFW_API = Abi.ARENA.allocate(MemoryLayout_GLFW_API);
-//
-//    static {
-//        try {
-//            MemoryLayout_GLFW_API.varHandle(MemoryLayout.PathElement.groupElement("glfw_get_proc_address")).set(DEFAULT_GLFW_API, 0L, GLFW.Functions.GetProcAddress);
-//            MemoryLayout_GLFW_API.varHandle(MemoryLayout.PathElement.groupElement("glfw_make_context_current")).set(DEFAULT_GLFW_API, 0L, GLFW.Functions.MakeContextCurrent);
-//            MemoryLayout_GLFW_API.varHandle(MemoryLayout.PathElement.groupElement("glfw_default_window_hints")).set(DEFAULT_GLFW_API, 0L, GLFW.Functions.DefaultWindowHints);
-//            MemoryLayout_GLFW_API.varHandle(MemoryLayout.PathElement.groupElement("glfw_window_hint")).set(DEFAULT_GLFW_API, 0L, GLFW.Functions.WindowHint);
-//            MemoryLayout_GLFW_API.varHandle(MemoryLayout.PathElement.groupElement("glfw_get_window_attrib")).set(DEFAULT_GLFW_API, 0L, GLFW.Functions.GetWindowAttrib);
-//            MemoryLayout_GLFW_API.varHandle(MemoryLayout.PathElement.groupElement("glfw_create_window")).set(DEFAULT_GLFW_API, 0L, GLFW.Functions.CreateWindow);
-//            MemoryLayout_GLFW_API.varHandle(MemoryLayout.PathElement.groupElement("glfw_destroy_window")).set(DEFAULT_GLFW_API, 0L, GLFW.Functions.DestroyWindow);
-//        } catch (Throwable e) {
-//            throw new RuntimeException(e);
-//        }
-//    }
 
     private Abi() {
     }

@@ -9,6 +9,8 @@ import java.lang.foreign.MemorySegment;
 import java.nio.charset.StandardCharsets;
 
 public class Engine implements AutoCloseable {
+    public static final int FLAG_NO_PARK = Abi.EngineFlag.NO_PARK;
+
     private long handle;
 
     public Engine(Config config) {
