@@ -15,7 +15,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Optional;
 
-public class Library {
+public final class Library {
     public static final Linker LINKER = Linker.nativeLinker();
     public static Path BASE = FMLPaths.GAMEDIR.get().resolve("xian").resolve("libs");
     private static final Marker LOGGERMARKER = MarkerFactory.getMarker("Library");
@@ -42,14 +42,14 @@ public class Library {
                 Files.createDirectories(DIR);
                 Files.copy(stream, PATH, StandardCopyOption.REPLACE_EXISTING);
             } catch (IOException error) {
-                throw (UnsatisfiedLinkError) new UnsatisfiedLinkError("Failed to extract native library " + NAME + " to " + PATH).initCause(error);
+                throw new UnsatisfiedLinkError("Failed to extract native library " + NAME + " to " + PATH).initCause(error);
             }
         }
 
         try {
             INSTANCE = SymbolLookup.libraryLookup(PATH, ARENA);
         } catch (Throwable error) {
-            throw (UnsatisfiedLinkError) new UnsatisfiedLinkError("Failed to load native library " + NAME + " from " + PATH).initCause(error);
+            throw new UnsatisfiedLinkError("Failed to load native library " + NAME + " from " + PATH).initCause(error);
         }
     }
 

@@ -31,7 +31,7 @@ import java.nio.file.Path;
 import java.security.ProtectionDomain;
 
 //@AutoService({GraphicsBootstrapper.class})
-public class GLFW implements GraphicsBootstrapper, IOrderedProvider {
+public final class GLFW implements GraphicsBootstrapper, IOrderedProvider {
     public static final String NAME = "仙";
     private static final String TITLE_PREFIX = NAME + ": ";
     private static final Marker LOGGERMARKER = MarkerFactory.getMarker("GLFW");

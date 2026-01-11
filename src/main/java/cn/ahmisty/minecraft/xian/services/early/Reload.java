@@ -16,7 +16,7 @@ import java.nio.file.Path;
 import java.util.Set;
 
 //@AutoService({IModFileCandidateLocator.class})
-public class Reload implements IModFileCandidateLocator, IOrderedProvider {
+public final class Reload implements IModFileCandidateLocator, IOrderedProvider {
     public static final String NAME = "仙";
     private static final Marker LOGGERMARKER = MarkerFactory.getMarker("Reload");
     private static final Logger LOGGER = LoggerFactory.getLogger(NAME);
