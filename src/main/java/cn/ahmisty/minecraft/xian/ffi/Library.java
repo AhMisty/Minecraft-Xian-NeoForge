@@ -27,48 +27,44 @@ public class Library {
     public final Path NAME;
     public SymbolLookup INSTANCE = name -> Optional.empty();
 
-    public Library(String name, Arena arena) {
+    public Library(String name, Arena arena) throws Throwable {
         ARENA = arena;
         PATH = BASE.resolve(System.mapLibraryName(name));
         DIR = PATH.getParent();
         NAME = PATH.getFileName();
-        boolean exist = false;
-        if (Files.exists(PATH)) {
-            exist = true;
-        } else {
-            String pathInJar = "xian/libs/" + NAME.toString();
+        final String pathInJar = "xian/libs/" + NAME.toString();
+        if (!Files.exists(PATH)) {
             LOGGER.info(LOGGERMARKER, "Could not find native library {} at {}, try to find in jar path {}", NAME, DIR, pathInJar);
             try (InputStream stream = Library.class.getClassLoader().getResourceAsStream(pathInJar)) {
                 if (stream == null) {
-                    LOGGER.error(LOGGERMARKER, "Could not find native library {} in jar path {}", NAME, pathInJar);
-                } else {
-                    LOGGER.info(LOGGERMARKER, "Successfully found native library {} in jar path {}, try to copy it to {}", NAME, pathInJar, DIR);
-                    Files.createDirectories(DIR);
-                    Files.copy(stream, PATH, StandardCopyOption.REPLACE_EXISTING);
-                    LOGGER.info(LOGGERMARKER, "Successfully copied native library {} to {}", NAME, DIR);
-                    exist = true;
+                    throw new UnsatisfiedLinkError("Could not find native library " + NAME + " at " + PATH + " or in jar path " + pathInJar);
                 }
+                Files.createDirectories(DIR);
+                Files.copy(stream, PATH, StandardCopyOption.REPLACE_EXISTING);
             } catch (IOException error) {
-                LOGGER.error(LOGGERMARKER, "Could not find native library {} with error {}", NAME, error);
+                throw (UnsatisfiedLinkError) new UnsatisfiedLinkError("Failed to extract native library " + NAME + " to " + PATH).initCause(error);
             }
         }
-        if (exist) {
+
+        try {
             INSTANCE = SymbolLookup.libraryLookup(PATH, ARENA);
+        } catch (Throwable error) {
+            throw (UnsatisfiedLinkError) new UnsatisfiedLinkError("Failed to load native library " + NAME + " from " + PATH).initCause(error);
         }
     }
 
     public Optional<MemorySegment> find(String name) {
         Optional<MemorySegment> symbol = INSTANCE.find(name);
         if (symbol.isEmpty()) {
-            LOGGER.warn(LOGGERMARKER, "Symbol {} not found in library {}", name, NAME);
+            LOGGER.error(LOGGERMARKER, "Symbol {} not found in library {}", name, NAME);
         }
         return symbol;
     }
 
     public MethodHandle loadFunctionCritical(String name, FunctionDescriptor descriptor) {
-        return find(name)
-                .map(segment -> LINKER.downcallHandle(segment, descriptor, Linker.Option.critical(false)))
-                .orElse(null);
+        MemorySegment symbol = INSTANCE.find(name)
+                .orElseThrow(() -> new UnsatisfiedLinkError("Symbol " + name + " not found in library " + NAME));
+        return LINKER.downcallHandle(symbol, descriptor, Linker.Option.critical(false));
     }
 
     public MethodHandle loadFunction(String name, FunctionDescriptor descriptor) {

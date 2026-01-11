@@ -15,7 +15,7 @@ import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.util.Set;
 
-@AutoService({IModFileCandidateLocator.class})
+//@AutoService({IModFileCandidateLocator.class})
 public class Reload implements IModFileCandidateLocator, IOrderedProvider {
     public static final String NAME = "仙";
     private static final Marker LOGGERMARKER = MarkerFactory.getMarker("Reload");
