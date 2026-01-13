@@ -34,37 +34,38 @@ public final class Library {
         NAME = PATH.getFileName();
         final String pathInJar = "xian/libs/" + NAME.toString();
         if (!Files.exists(PATH)) {
-            LOGGER.info(LOGGERMARKER, "Could not find native library {} at {}, try to find in jar path {}", NAME, DIR, pathInJar);
+            LOGGER.warn(LOGGERMARKER, "Failed to find the native library {} at {}, try to find in jar path {}", NAME, DIR, pathInJar);
             try (InputStream stream = Library.class.getClassLoader().getResourceAsStream(pathInJar)) {
                 if (stream == null) {
-                    throw new UnsatisfiedLinkError("Could not find native library " + NAME + " at " + PATH + " or in jar path " + pathInJar);
+                    throw new UnsatisfiedLinkError("Failed to find the native library " + NAME + " at " + PATH + " or in jar path " + pathInJar);
                 }
                 Files.createDirectories(DIR);
                 Files.copy(stream, PATH, StandardCopyOption.REPLACE_EXISTING);
             } catch (IOException error) {
-                throw new UnsatisfiedLinkError("Failed to extract native library " + NAME + " to " + PATH).initCause(error);
+                throw new UnsatisfiedLinkError("Failed to extract the native library " + NAME + " to " + PATH).initCause(error);
             }
         }
 
         try {
             INSTANCE = SymbolLookup.libraryLookup(PATH, ARENA);
+            LOGGER.info(LOGGERMARKER, "Successfully loaded the native library {}", NAME);
         } catch (Throwable error) {
-            throw new UnsatisfiedLinkError("Failed to load native library " + NAME + " from " + PATH).initCause(error);
+            throw new UnsatisfiedLinkError("Failed to load the native library " + NAME + " from " + PATH).initCause(error);
         }
     }
 
-    public Optional<MemorySegment> find(String name) {
+    public Optional<MemorySegment> find(String name) throws UnsatisfiedLinkError {
         Optional<MemorySegment> symbol = INSTANCE.find(name);
         if (symbol.isEmpty()) {
-            LOGGER.error(LOGGERMARKER, "Symbol {} not found in library {}", name, NAME);
+            throw new UnsatisfiedLinkError("Failed to load the symbol " + name + " in library " + NAME);
         }
         return symbol;
     }
 
     public MethodHandle loadFunctionCritical(String name, FunctionDescriptor descriptor) {
-        MemorySegment symbol = INSTANCE.find(name)
-                .orElseThrow(() -> new UnsatisfiedLinkError("Symbol " + name + " not found in library " + NAME));
-        return LINKER.downcallHandle(symbol, descriptor, Linker.Option.critical(false));
+        return find(name)
+                .map(segment -> LINKER.downcallHandle(segment, descriptor, Linker.Option.critical(false)))
+                .orElse(null);
     }
 
     public MethodHandle loadFunction(String name, FunctionDescriptor descriptor) {
