@@ -25,30 +25,73 @@ public final class Engine {
 
     static {
         try (Arena arena = Arena.ofConfined()) {
-            MemorySegment glfw_api = arena.allocate(Abi.GLFW_API);
-            glfw_api.set(ValueLayout.ADDRESS, Abi.OFFSET_GLFW_API_GET_PROC_ADDRESS, MemorySegment.ofAddress(GLFW.Functions.GetProcAddress));
-            glfw_api.set(ValueLayout.ADDRESS, Abi.OFFSET_GLFW_API_MAKE_CONTEXT_CURRENT, MemorySegment.ofAddress(GLFW.Functions.MakeContextCurrent));
             if (
                     (boolean) Abi.set_resources_dir.invokeExact(
                             arena.allocateFrom(
                                     WORKSPACE.resolve("resources").toString(),
                                     StandardCharsets.UTF_8
                             )
-                    ) && (boolean) Abi.set_config_dir.invokeExact(
+                    )
+            ) {
+                LOGGER.info(LOGGERMARKER, "Successfully set resources dir");
+            } else {
+                String error = "Failed to set resources dir";
+                LOGGER.error(LOGGERMARKER, error);
+                throw new ExceptionInInitializerError(error);
+            }
+
+            if (
+                    (boolean) Abi.set_config_dir.invokeExact(
                             arena.allocateFrom(
                                     WORKSPACE.resolve("config").toString(),
                                     StandardCharsets.UTF_8
                             )
-                    ) && (boolean) Abi.set_thread_pool_cap.invokeExact(0)
-                      && (boolean) Abi.set_glfw_context.invokeExact(
+                    )
+            ) {
+                LOGGER.info(LOGGERMARKER, "Successfully set config dir");
+            } else {
+                String error = "Failed to set config dir";
+                LOGGER.error(LOGGERMARKER, error);
+                throw new ExceptionInInitializerError(error);
+            }
+
+            if (
+                    (boolean) Abi.set_thread_pool_cap.invokeExact(0)
+            ) {
+                LOGGER.info(LOGGERMARKER, "Successfully set thread pool cap");
+            } else {
+                String error = "Failed to set thread pool cap";
+                LOGGER.error(LOGGERMARKER, error);
+                throw new ExceptionInInitializerError(error);
+            }
+
+            MemorySegment glfw_api = arena.allocate(Abi.GLFW_API);
+            glfw_api.set(ValueLayout.ADDRESS, Abi.OFFSET_GLFW_API_GET_PROC_ADDRESS, MemorySegment.ofAddress(GLFW.Functions.GetProcAddress));
+            glfw_api.set(ValueLayout.ADDRESS, Abi.OFFSET_GLFW_API_MAKE_CONTEXT_CURRENT, MemorySegment.ofAddress(GLFW.Functions.MakeContextCurrent));
+            if (
+                    (boolean) Abi.set_glfw_context.invokeExact(
                             MemorySegment.ofAddress(Minecraft.getInstance().getWindow().handle()),
                             glfw_api
-                    ) && (boolean) Abi.set_gl_api.invokeExact(Abi.XIAN_WEB_ENGINE_GL_API_GL)
+                    )
             ) {
-                LOGGER.info(LOGGERMARKER, "Successfully initialized the WebEngine");
+                LOGGER.info(LOGGERMARKER, "Successfully set glfw context");
             } else {
-                throw new ExceptionInInitializerError("Failed to initialize the WebEngine");
+                String error = "Failed to set glfw context";
+                LOGGER.error(LOGGERMARKER, error);
+                throw new ExceptionInInitializerError(error);
             }
+
+            if (
+                    (boolean) Abi.set_gl_api.invokeExact(Abi.XIAN_WEB_ENGINE_GL_API_GL)
+            ) {
+                LOGGER.info(LOGGERMARKER, "Successfully set gl api");
+            } else {
+                String error = "Failed to set gl api";
+                LOGGER.error(LOGGERMARKER, error);
+                throw new ExceptionInInitializerError(error);
+            }
+
+            LOGGER.info(LOGGERMARKER, "Successfully initialized");
         } catch (Throwable t) {
             throw new ExceptionInInitializerError(t);
         }

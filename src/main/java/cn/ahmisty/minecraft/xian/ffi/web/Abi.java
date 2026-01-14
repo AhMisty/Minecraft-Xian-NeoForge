@@ -1,7 +1,6 @@
 package cn.ahmisty.minecraft.xian.ffi.web;
 
 import cn.ahmisty.minecraft.xian.ffi.Library;
-import org.lwjgl.glfw.GLFW;
 
 import java.lang.foreign.*;
 import java.lang.invoke.MethodHandle;
@@ -45,6 +44,7 @@ public final class Abi {
             ValueLayout.JAVA_INT.withName("width"),
             ValueLayout.JAVA_INT.withName("height"),
             ValueLayout.JAVA_FLOAT.withName("hidpi_scale_factor"),
+            MemoryLayout.paddingLayout(4),
             ValueLayout.ADDRESS.withName("initial_url")
     );
     public static final long OFFSET_VIEW_CONFIG_WIDTH =
@@ -55,7 +55,6 @@ public final class Abi {
             VIEW_CONFIG.byteOffset(MemoryLayout.PathElement.groupElement("hidpi_scale_factor"));
     public static final long OFFSET_VIEW_CONFIG_INITIAL_URL =
             VIEW_CONFIG.byteOffset(MemoryLayout.PathElement.groupElement("initial_url"));
-
     public static final MemoryLayout INPUT_EVENT = MemoryLayout.structLayout(
             ValueLayout.JAVA_INT.withName("kind"),
             ValueLayout.JAVA_FLOAT.withName("x"),

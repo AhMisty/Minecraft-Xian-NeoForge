@@ -1,6 +1,5 @@
-package cn.ahmisty.minecraft.xian.services.early;
+package cn.ahmisty.minecraft.xian.service.early;
 
-import com.google.auto.service.AutoService;
 import net.neoforged.neoforgespi.earlywindow.GraphicsBootstrapper;
 import net.neoforged.neoforgespi.locating.IOrderedProvider;
 import org.objectweb.asm.ClassReader;
@@ -243,7 +242,7 @@ public final class GLFW implements GraphicsBootstrapper, IOrderedProvider {
 
     private static final class GlfwAsmTransformer implements ClassFileTransformer {
         private static final String TARGET_CLASS_INTERNAL_NAME = "org/lwjgl/glfw/GLFW";
-        private static final String THIS_CLASS_INTERNAL_NAME = "cn/ahmisty/minecraft/xian/services/early/GLFW";
+        private static final String THIS_CLASS_INTERNAL_NAME = "cn/ahmisty/minecraft/xian/service/early/GLFW";
         private static final String ICON_PROCESSOR_INTERNAL_NAME = THIS_CLASS_INTERNAL_NAME + "$IconProcessor";
 
         private final Instrumentation instrumentation;

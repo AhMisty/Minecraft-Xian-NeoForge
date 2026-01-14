@@ -1,4 +1,4 @@
-package cn.ahmisty.minecraft.xian.services.early;
+package cn.ahmisty.minecraft.xian.service.early;
 
 import com.google.auto.service.AutoService;
 import net.neoforged.fml.loading.FMLLoader;

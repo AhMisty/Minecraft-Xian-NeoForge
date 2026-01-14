@@ -27,7 +27,7 @@ public final class Library {
     public final Path NAME;
     public SymbolLookup INSTANCE = name -> Optional.empty();
 
-    public Library(String name, Arena arena) throws Throwable {
+    public Library(String name, Arena arena) throws UnsatisfiedLinkError, IOException {
         ARENA = arena;
         PATH = BASE.resolve(System.mapLibraryName(name));
         DIR = PATH.getParent();
@@ -37,27 +37,29 @@ public final class Library {
             LOGGER.warn(LOGGERMARKER, "Failed to find the native library {} at {}, try to find in jar path {}", NAME, DIR, pathInJar);
             try (InputStream stream = Library.class.getClassLoader().getResourceAsStream(pathInJar)) {
                 if (stream == null) {
-                    throw new UnsatisfiedLinkError("Failed to find the native library " + NAME + " at " + PATH + " or in jar path " + pathInJar);
+                    String error = "Failed to find the native library " + NAME + " at " + PATH + " or in jar path " + pathInJar;
+                    LOGGER.error(LOGGERMARKER, error);
+                    throw new UnsatisfiedLinkError(error);
                 }
                 Files.createDirectories(DIR);
                 Files.copy(stream, PATH, StandardCopyOption.REPLACE_EXISTING);
-            } catch (IOException error) {
-                throw new UnsatisfiedLinkError("Failed to extract the native library " + NAME + " to " + PATH).initCause(error);
+            } catch (IOException io_error) {
+                String error = "Failed to extract the native library " + NAME + " to " + PATH;
+                LOGGER.error(LOGGERMARKER, error, io_error);
+                throw new IOException(io_error);
             }
         }
 
-        try {
-            INSTANCE = SymbolLookup.libraryLookup(PATH, ARENA);
-            LOGGER.info(LOGGERMARKER, "Successfully loaded the native library {}", NAME);
-        } catch (Throwable error) {
-            throw new UnsatisfiedLinkError("Failed to load the native library " + NAME + " from " + PATH).initCause(error);
-        }
+        INSTANCE = SymbolLookup.libraryLookup(PATH, ARENA);
+        LOGGER.info(LOGGERMARKER, "Successfully loaded the native library {}", NAME);
     }
 
     public Optional<MemorySegment> find(String name) throws UnsatisfiedLinkError {
         Optional<MemorySegment> symbol = INSTANCE.find(name);
         if (symbol.isEmpty()) {
-            throw new UnsatisfiedLinkError("Failed to load the symbol " + name + " in library " + NAME);
+            String error = "Failed to load the symbol " + name + " in library " + NAME;
+            LOGGER.error(LOGGERMARKER, error);
+            throw new UnsatisfiedLinkError(error);
         }
         return symbol;
     }
