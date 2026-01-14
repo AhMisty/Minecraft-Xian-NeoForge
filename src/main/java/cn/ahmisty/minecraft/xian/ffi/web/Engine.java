@@ -97,7 +97,7 @@ public final class Engine {
         }
     }
 
-    public static void safeInit() {}
+    public static void safe_init() {}
 
     public static boolean set_assume_context_current(boolean assume_context_current) throws Throwable {
         return (boolean) Abi.set_assume_context_current.invokeExact(assume_context_current ? 1 : 0);
