@@ -62,7 +62,7 @@ public class WebView implements Renderable {
 
         try {
             Engine.tick();
-            this.view.paint();
+//            this.view.paint();
         } catch (Throwable t) {
             LOGGER.warn("WebView tick/paint failed", t);
         }
