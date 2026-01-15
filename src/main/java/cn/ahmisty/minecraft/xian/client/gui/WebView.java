@@ -15,6 +15,7 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.client.blaze3d.validation.ValidationGpuDevice;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,9 +23,6 @@ import java.lang.foreign.Arena;
 
 public class WebView implements Renderable {
     private static final Logger LOGGER = LoggerFactory.getLogger(WebView.class);
-    static {
-        Engine.safe_init();
-    }
 
     public final View view;
     public final int texture_id;
@@ -36,6 +34,7 @@ public class WebView implements Renderable {
     private AbstractTexture texture;
 
     public WebView(int x, int y, int width, int height, float hidpi_scale_factor, String initial_url) throws Throwable {
+        RenderSystem.assertOnRenderThread();
         try(Arena arena = Arena.ofConfined()) {
             this.view = new View(
                     new View.Config(arena)
@@ -54,7 +53,7 @@ public class WebView implements Renderable {
     }
 
     @Override
-    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    public void render(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         this.render(guiGraphics, this.x, this.y, this.width, this.height, mouseX, mouseY, partialTick);
     }
 
@@ -62,9 +61,7 @@ public class WebView implements Renderable {
         RenderSystem.assertOnRenderThread();
 
         try {
-            // Embedder contract: tick Servo every frame. needs_tick is only a best-effort hint.
             Engine.tick();
-            // paint() is cheap when clean (Rust side early-outs), and keeps working if AUTO_PAINT is disabled.
             this.view.paint();
         } catch (Throwable t) {
             LOGGER.warn("WebView tick/paint failed", t);

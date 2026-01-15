@@ -11,6 +11,10 @@ public final class View {
     public int width = 0;
     public int height = 0;
 
+    static {
+        Engine.safe_init();
+    }
+
     public View(Config config) throws Throwable {
         MemorySegment view = (MemorySegment) Abi.view_create.invokeExact(config.memory_segment);
         if (view == MemorySegment.NULL) {
@@ -36,6 +40,10 @@ public final class View {
         this.width = width;
         this.height = height;
         Abi.view_resize.invokeExact(handle, width, height);
+    }
+
+    public boolean set_hidpi_scale_factor(float hidpi_scale_factor) throws Throwable {
+        return (boolean) Abi.view_set_hidpi_scale_factor.invokeExact(handle, hidpi_scale_factor);
     }
 
     public int texture_id() throws Throwable {
@@ -175,4 +183,3 @@ public final class View {
         }
     }
 }
-

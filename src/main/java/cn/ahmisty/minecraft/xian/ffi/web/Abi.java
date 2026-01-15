@@ -142,6 +142,8 @@ public final class Abi {
             LIBRARY.loadFunctionCritical("xian_web_engine_view_load_url", FunctionDescriptor.of(ValueLayout.JAVA_BOOLEAN, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
     public static final MethodHandle view_resize =
             LIBRARY.loadFunctionCritical("xian_web_engine_view_resize", FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.JAVA_INT, ValueLayout.JAVA_INT));
+    public static final MethodHandle view_set_hidpi_scale_factor =
+            LIBRARY.loadFunctionCritical("xian_web_engine_view_set_hidpi_scale_factor", FunctionDescriptor.of(ValueLayout.JAVA_BOOLEAN, ValueLayout.ADDRESS, ValueLayout.JAVA_FLOAT));
     public static final MethodHandle view_texture_id =
             LIBRARY.loadFunctionCritical("xian_web_engine_view_texture_id", FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS));
     public static final MethodHandle view_needs_paint =
