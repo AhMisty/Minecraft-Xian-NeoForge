@@ -1,6 +1,5 @@
 package cn.ahmisty.minecraft.xian.client.gui;
 
-import cn.ahmisty.minecraft.xian.ffi.web.Engine;
 import cn.ahmisty.minecraft.xian.ffi.web.View;
 import com.mojang.blaze3d.opengl.GlDevice;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -18,24 +17,29 @@ import net.neoforged.neoforge.client.blaze3d.validation.ValidationGpuDevice;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
 
 import java.lang.foreign.Arena;
 
 public class WebView implements Renderable {
-    private static final Logger LOGGER = LoggerFactory.getLogger(WebView.class);
+    private static final Marker LOGGERMARKER = MarkerFactory.getMarker("WebView");
+    private static final Logger LOGGER = LoggerFactory.getLogger("仙");
 
     public final View view;
     public final int texture_id;
     public final Identifier texture_location;
-    public final int x;
-    public final int y;
-    public final int width;
-    public final int height;
-    private AbstractTexture texture;
+
+    public int x;
+    public int y;
+
+    public int width;
+    public int height;
 
     public WebView(int x, int y, int width, int height, float hidpi_scale_factor, String initial_url) throws Throwable {
         RenderSystem.assertOnRenderThread();
-        try(Arena arena = Arena.ofConfined()) {
+
+        try (Arena arena = Arena.ofConfined()) {
             this.view = new View(
                     new View.Config(arena)
                             .set_width(width)
@@ -44,12 +48,57 @@ public class WebView implements Renderable {
                             .set_initial_url(initial_url)
             );
         }
+
         this.texture_id = this.view.texture_id();
         this.texture_location = Identifier.fromNamespaceAndPath("xian", "webview/" + this.texture_id);
+
         this.x = x;
         this.y = y;
         this.width = width;
         this.height = height;
+
+        this.registerExternalTexture();
+    }
+
+    public void move(int x, int y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    public void resize(int width, int height) {
+        RenderSystem.assertOnRenderThread();
+
+        if (this.width == width && this.height == height) {
+            return;
+        }
+
+        try {
+            this.view.resize(width, height);
+        } catch (Throwable t) {
+            LOGGER.error(LOGGERMARKER, "Failed to resize", t);
+            return;
+        }
+
+        this.width = width;
+        this.height = height;
+
+        this.registerExternalTexture();
+    }
+
+    public void destroy() {
+        RenderSystem.assertOnRenderThread();
+
+        try {
+            Minecraft.getInstance().getTextureManager().release(this.texture_location);
+        } catch (Throwable t) {
+            LOGGER.error(LOGGERMARKER, "WebView texture release failed (texture_id={})", this.texture_id, t);
+        }
+
+        try {
+            this.view.destroy();
+        } catch (Throwable t) {
+            LOGGER.error(LOGGERMARKER, "WebView view destroy failed (texture_id={})", this.texture_id, t);
+        }
     }
 
     @Override
@@ -59,20 +108,6 @@ public class WebView implements Renderable {
 
     public void render(GuiGraphics guiGraphics, int x, int y, int width, int height, int mouseX, int mouseY, float partialTick) {
         RenderSystem.assertOnRenderThread();
-
-        try {
-            Engine.tick();
-//            this.view.paint();
-        } catch (Throwable t) {
-            LOGGER.warn("WebView tick/paint failed", t);
-        }
-
-        try {
-            this.ensureTextureRegistered();
-        } catch (Throwable t) {
-            LOGGER.warn("WebView texture registration failed (texture_id={})", this.texture_id, t);
-            return;
-        }
 
         guiGraphics.enableScissor(x, y, x + width, y + height);
         try {
@@ -95,31 +130,28 @@ public class WebView implements Renderable {
         }
     }
 
-    private void ensureTextureRegistered() {
-        if (this.texture != null) {
-            return;
-        }
-
+    private void registerExternalTexture() {
         var device = RenderSystem.getDevice();
-        var realDevice = device;
-        while (realDevice instanceof ValidationGpuDevice validation) {
-            realDevice = validation.getRealDevice();
+        while (device instanceof ValidationGpuDevice validation) {
+            device = validation.getRealDevice();
         }
 
-        if (!(realDevice instanceof GlDevice glDevice)) {
-            throw new IllegalStateException("Unsupported GpuDevice backend: " + device.getBackendName());
+        if (!(device instanceof GlDevice glDevice)) {
+            String error = "Unsupported GpuDevice backend: " + device.getBackendName();
+            LOGGER.error(LOGGERMARKER, error);
+            throw new IllegalStateException(error);
         }
 
         GpuTexture gpuTexture = glDevice.createExternalTexture(
-                "xian_webview_" + Integer.toUnsignedString(this.texture_id),
+                "xian_webview_" + this.texture_id,
                 GpuTexture.USAGE_TEXTURE_BINDING,
                 this.texture_id
         );
         GpuTextureView gpuTextureView = glDevice.createTextureView(gpuTexture);
         GpuSampler sampler = RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR);
 
-        this.texture = new ExternalTexture(gpuTexture, gpuTextureView, sampler);
-        Minecraft.getInstance().getTextureManager().register(this.texture_location, this.texture);
+        AbstractTexture texture = new ExternalTexture(gpuTexture, gpuTextureView, sampler);
+        Minecraft.getInstance().getTextureManager().register(this.texture_location, texture);
     }
 
     private static final class ExternalTexture extends AbstractTexture {
@@ -130,3 +162,4 @@ public class WebView implements Renderable {
         }
     }
 }
+
