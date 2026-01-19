@@ -4,8 +4,6 @@ import cn.ahmisty.minecraft.xian.client.gui.WebView;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.neoforged.neoforge.client.gui.widget.ScrollPanel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 
@@ -15,7 +13,6 @@ public abstract class ModListScreenMixin_InfoPanel extends ScrollPanel {
     @Unique
     private static WebView xian$webview;
 
-    // Dummy constructor for compilation; mixins are never instantiated directly.
     protected ModListScreenMixin_InfoPanel(Minecraft client, int width, int height, int top, int left) {
         super(client, width, height, top, left);
     }
