@@ -1,6 +1,5 @@
 package cn.ahmisty.minecraft.xian.ffi.web;
 
-import net.minecraft.client.Minecraft;
 import net.neoforged.fml.loading.FMLPaths;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
@@ -67,16 +66,12 @@ public final class Engine {
 
             MemorySegment glfw_api = arena.allocate(Abi.GLFW_API);
             glfw_api.set(ValueLayout.ADDRESS, Abi.OFFSET_GLFW_API_GET_PROC_ADDRESS, MemorySegment.ofAddress(GLFW.Functions.GetProcAddress));
-            glfw_api.set(ValueLayout.ADDRESS, Abi.OFFSET_GLFW_API_MAKE_CONTEXT_CURRENT, MemorySegment.ofAddress(GLFW.Functions.MakeContextCurrent));
             if (
-                    (boolean) Abi.set_glfw_context.invokeExact(
-                            MemorySegment.ofAddress(Minecraft.getInstance().getWindow().handle()),
-                            glfw_api
-                    )
+                    (boolean) Abi.set_glfw_api.invokeExact(glfw_api)
             ) {
-                LOGGER.info(LOGGERMARKER, "Successfully set glfw context");
+                LOGGER.info(LOGGERMARKER, "Successfully set glfw api");
             } else {
-                String error = "Failed to set glfw context";
+                String error = "Failed to set glfw api";
                 LOGGER.error(LOGGERMARKER, error);
                 throw new ExceptionInInitializerError(error);
             }
@@ -91,24 +86,23 @@ public final class Engine {
                 throw new ExceptionInInitializerError(error);
             }
 
-            LOGGER.info(LOGGERMARKER, "Successfully initialized");
+            LOGGER.info(LOGGERMARKER, "Successfully configured");
+
+            if (
+                    (boolean) Abi.init.invokeExact()
+            ) {
+                LOGGER.info(LOGGERMARKER, "Successfully initialized");
+            } else {
+                String error = "Failed to initialize";
+                LOGGER.error(LOGGERMARKER, error);
+                throw new ExceptionInInitializerError(error);
+            }
         } catch (Throwable t) {
             throw new ExceptionInInitializerError(t);
         }
     }
 
-    public static void safe_init() {}
-
-    public static boolean set_assume_context_current(boolean assume_context_current) throws Throwable {
-        return (boolean) Abi.set_assume_context_current.invokeExact(assume_context_current ? 1 : 0);
-    }
-
-    public static boolean set_auto_paint(boolean auto_paint) throws Throwable {
-        return (boolean) Abi.set_auto_paint.invokeExact(auto_paint ? 1 : 0);
-    }
-
-    public static boolean needs_tick() throws Throwable {
-        return (boolean) Abi.needs_tick.invokeExact();
+    public static void safe_init() {
     }
 
     public static int tick() throws Throwable {

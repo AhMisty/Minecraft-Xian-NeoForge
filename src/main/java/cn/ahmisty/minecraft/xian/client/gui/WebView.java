@@ -109,6 +109,12 @@ public class WebView implements Renderable {
     public void render(GuiGraphics guiGraphics, int x, int y, int width, int height, int mouseX, int mouseY, float partialTick) {
         RenderSystem.assertOnRenderThread();
 
+        try {
+            this.view.paint();
+        } catch (Throwable t) {
+            LOGGER.error(LOGGERMARKER, "Failed to paint (texture_id={})", this.texture_id, t);
+        }
+
         guiGraphics.enableScissor(x, y, x + width, y + height);
         try {
             guiGraphics.blit(

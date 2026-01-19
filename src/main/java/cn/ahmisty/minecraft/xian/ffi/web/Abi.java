@@ -32,13 +32,10 @@ public final class Abi {
     public static final int XIAN_WEB_ENGINE_MOD_META = 1 << 3;
 
     public static final MemoryLayout GLFW_API = MemoryLayout.structLayout(
-            ValueLayout.ADDRESS.withName("glfw_get_proc_address"),
-            ValueLayout.ADDRESS.withName("glfw_make_context_current")
+            ValueLayout.ADDRESS.withName("glfw_get_proc_address")
     );
     public static final long OFFSET_GLFW_API_GET_PROC_ADDRESS =
             GLFW_API.byteOffset(MemoryLayout.PathElement.groupElement("glfw_get_proc_address"));
-    public static final long OFFSET_GLFW_API_MAKE_CONTEXT_CURRENT =
-            GLFW_API.byteOffset(MemoryLayout.PathElement.groupElement("glfw_make_context_current"));
 
     public static final MemoryLayout VIEW_CONFIG = MemoryLayout.structLayout(
             ValueLayout.JAVA_INT.withName("width"),
@@ -117,17 +114,13 @@ public final class Abi {
     public static final MethodHandle set_thread_pool_cap =
             LIBRARY.loadFunctionCritical("xian_web_engine_set_thread_pool_cap", FunctionDescriptor.of(ValueLayout.JAVA_BOOLEAN, ValueLayout.JAVA_INT));
 
-    public static final MethodHandle set_glfw_context =
-            LIBRARY.loadFunctionCritical("xian_web_engine_set_glfw_context", FunctionDescriptor.of(ValueLayout.JAVA_BOOLEAN, ValueLayout.ADDRESS, GLFW_API));
+    public static final MethodHandle set_glfw_api =
+            LIBRARY.loadFunctionCritical("xian_web_engine_set_glfw_api", FunctionDescriptor.of(ValueLayout.JAVA_BOOLEAN, GLFW_API));
     public static final MethodHandle set_gl_api =
             LIBRARY.loadFunctionCritical("xian_web_engine_set_gl_api", FunctionDescriptor.of(ValueLayout.JAVA_BOOLEAN, ValueLayout.JAVA_INT));
-    public static final MethodHandle set_assume_context_current =
-            LIBRARY.loadFunctionCritical("xian_web_engine_set_assume_context_current", FunctionDescriptor.of(ValueLayout.JAVA_BOOLEAN, ValueLayout.JAVA_INT));
-    public static final MethodHandle set_auto_paint =
-            LIBRARY.loadFunctionCritical("xian_web_engine_set_auto_paint", FunctionDescriptor.of(ValueLayout.JAVA_BOOLEAN, ValueLayout.JAVA_INT));
 
-    public static final MethodHandle needs_tick =
-            LIBRARY.loadFunctionCritical("xian_web_engine_needs_tick", FunctionDescriptor.of(ValueLayout.JAVA_BOOLEAN));
+    public static final MethodHandle init =
+            LIBRARY.loadFunctionCritical("xian_web_engine_init", FunctionDescriptor.of(ValueLayout.JAVA_BOOLEAN));
     public static final MethodHandle tick =
             LIBRARY.loadFunctionCritical("xian_web_engine_tick", FunctionDescriptor.of(ValueLayout.JAVA_INT));
 
@@ -146,8 +139,6 @@ public final class Abi {
             LIBRARY.loadFunctionCritical("xian_web_engine_view_set_hidpi_scale_factor", FunctionDescriptor.of(ValueLayout.JAVA_BOOLEAN, ValueLayout.ADDRESS, ValueLayout.JAVA_FLOAT));
     public static final MethodHandle view_texture_id =
             LIBRARY.loadFunctionCritical("xian_web_engine_view_texture_id", FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS));
-    public static final MethodHandle view_needs_paint =
-            LIBRARY.loadFunctionCritical("xian_web_engine_view_needs_paint", FunctionDescriptor.of(ValueLayout.JAVA_BOOLEAN, ValueLayout.ADDRESS));
     public static final MethodHandle view_paint =
             LIBRARY.loadFunctionCritical("xian_web_engine_view_paint", FunctionDescriptor.of(ValueLayout.JAVA_BOOLEAN, ValueLayout.ADDRESS));
 

@@ -50,10 +50,6 @@ public final class View {
         return (int) Abi.view_texture_id.invokeExact(handle);
     }
 
-    public boolean needs_paint() throws Throwable {
-        return (boolean) Abi.view_needs_paint.invokeExact(handle);
-    }
-
     public boolean paint() throws Throwable {
         return (boolean) Abi.view_paint.invokeExact(handle);
     }
