@@ -110,7 +110,7 @@ public class WebView implements Renderable {
         RenderSystem.assertOnRenderThread();
 
         try {
-            this.view.paint();
+            System.out.println(this.view.paint());
         } catch (Throwable t) {
             LOGGER.error(LOGGERMARKER, "Failed to paint (texture_id={})", this.texture_id, t);
         }

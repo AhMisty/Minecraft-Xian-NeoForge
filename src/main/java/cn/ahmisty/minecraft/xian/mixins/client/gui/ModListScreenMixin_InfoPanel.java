@@ -24,7 +24,7 @@ public abstract class ModListScreenMixin_InfoPanel extends ScrollPanel {
         if (xian$webview == null) {
             try {
                 // Use a data: URL first to validate the render/texture plumbing without relying on network/TLS.
-                xian$webview = new WebView(0, 0, this.width, this.height, 1, "baidu.com");
+                xian$webview = new WebView(0, 0, this.width, this.height, 1, "https://www.baidu.com");
             } catch (Throwable t) {
                 xian$webview = null;
                 return;
