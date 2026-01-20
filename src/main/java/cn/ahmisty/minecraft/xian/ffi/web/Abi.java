@@ -31,6 +31,12 @@ public final class Abi {
     public static final int XIAN_WEB_ENGINE_MOD_ALT = 1 << 2;
     public static final int XIAN_WEB_ENGINE_MOD_META = 1 << 3;
 
+    // View load status mapping (matches the native ABI).
+    public static final int XIAN_WEB_ENGINE_LOAD_STATUS_STARTED = 0;
+    public static final int XIAN_WEB_ENGINE_LOAD_STATUS_HEAD_PARSED = 1;
+    public static final int XIAN_WEB_ENGINE_LOAD_STATUS_COMPLETE = 2;
+    public static final int XIAN_WEB_ENGINE_LOAD_STATUS_INVALID = -1; // 0xFFFFFFFF
+
     public static final MemoryLayout GLFW_API = MemoryLayout.structLayout(
             ValueLayout.ADDRESS.withName("glfw_get_proc_address")
     );
@@ -141,6 +147,10 @@ public final class Abi {
             LIBRARY.loadFunctionCritical("xian_web_engine_view_texture_id", FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS));
     public static final MethodHandle view_paint =
             LIBRARY.loadFunctionCritical("xian_web_engine_view_paint", FunctionDescriptor.of(ValueLayout.JAVA_BOOLEAN, ValueLayout.ADDRESS));
+    public static final MethodHandle view_load_status =
+            LIBRARY.loadFunctionCritical("xian_web_engine_view_load_status", FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS));
+    public static final MethodHandle view_copy_url_utf8 =
+            LIBRARY.loadFunctionCritical("xian_web_engine_view_copy_url_utf8", FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_INT));
 
     public static final MethodHandle view_send_input_events =
             LIBRARY.loadFunctionCritical("xian_web_engine_view_send_input_events", FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_INT));

@@ -50,6 +50,27 @@ public final class View {
         return (int) Abi.view_texture_id.invokeExact(handle);
     }
 
+    public int load_status() throws Throwable {
+        return (int) Abi.view_load_status.invokeExact(handle);
+    }
+
+    public String url() throws Throwable {
+        int len = (int) Abi.view_copy_url_utf8.invokeExact(handle, MemorySegment.NULL, 0);
+        if (len <= 0) {
+            return null;
+        }
+
+        try (Arena arena = Arena.ofConfined()) {
+            MemorySegment buf = arena.allocate(len + 1L);
+            int written = (int) Abi.view_copy_url_utf8.invokeExact(handle, buf, len + 1);
+            if (written <= 0) {
+                return null;
+            }
+            byte[] bytes = buf.asSlice(0, written).toArray(ValueLayout.JAVA_BYTE);
+            return new String(bytes, StandardCharsets.UTF_8);
+        }
+    }
+
     public boolean paint() throws Throwable {
         return (boolean) Abi.view_paint.invokeExact(handle);
     }

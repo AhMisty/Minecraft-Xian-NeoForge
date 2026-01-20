@@ -10,8 +10,11 @@ import org.slf4j.MarkerFactory;
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.stream.Stream;
 
 public final class Engine {
     private static final Marker LOGGERMARKER = MarkerFactory.getMarker("WebEngine");
@@ -22,21 +25,37 @@ public final class Engine {
 
     public static final Path WORKSPACE = FMLPaths.GAMEDIR.get().resolve("xian").resolve("web");
 
+    private static boolean dirHasAnyEntries(Path dir) {
+        try (Stream<Path> stream = Files.list(dir)) {
+            return stream.findAny().isPresent();
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
     static {
         try (Arena arena = Arena.ofConfined()) {
-            if (
-                    (boolean) Abi.set_resources_dir.invokeExact(
-                            arena.allocateFrom(
-                                    WORKSPACE.resolve("resources").toString(),
-                                    StandardCharsets.UTF_8
-                            )
-                    )
-            ) {
-                LOGGER.info(LOGGERMARKER, "Successfully set resources dir");
+            // NOTE: Setting a directory-backed Servo ResourceReader to an empty/nonexistent directory will
+            // effectively make all resources "missing" and may lead to a fully transparent output.
+            // Only override the resource dir when it is actually populated.
+            Path resourcesDir = WORKSPACE.resolve("resources");
+            if (Files.isDirectory(resourcesDir) && dirHasAnyEntries(resourcesDir)) {
+                if (
+                        (boolean) Abi.set_resources_dir.invokeExact(
+                                arena.allocateFrom(
+                                        resourcesDir.toString(),
+                                        StandardCharsets.UTF_8
+                                )
+                        )
+                ) {
+                    LOGGER.info(LOGGERMARKER, "Successfully set resources dir");
+                } else {
+                    String error = "Failed to set resources dir";
+                    LOGGER.error(LOGGERMARKER, error);
+                    throw new ExceptionInInitializerError(error);
+                }
             } else {
-                String error = "Failed to set resources dir";
-                LOGGER.error(LOGGERMARKER, error);
-                throw new ExceptionInInitializerError(error);
+                LOGGER.warn(LOGGERMARKER, "Skip set resources dir because it is missing/empty: {}", resourcesDir);
             }
 
             if (
