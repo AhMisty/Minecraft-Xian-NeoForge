@@ -74,6 +74,21 @@ public final class Engine {
             }
 
             if (
+                    (boolean) Abi.set_web_root_dir.invokeExact(
+                            arena.allocateFrom(
+                                    WORKSPACE.toString(),
+                                    StandardCharsets.UTF_8
+                            )
+                    )
+            ) {
+                LOGGER.info(LOGGERMARKER, "Successfully set web root dir");
+            } else {
+                String error = "Failed to set web root dir";
+                LOGGER.error(LOGGERMARKER, error);
+                throw new ExceptionInInitializerError(error);
+            }
+
+            if (
                     (boolean) Abi.set_thread_pool_cap.invokeExact(0)
             ) {
                 LOGGER.info(LOGGERMARKER, "Successfully set thread pool cap");

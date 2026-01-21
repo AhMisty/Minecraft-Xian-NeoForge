@@ -29,6 +29,8 @@ import org.slf4j.Marker;
 import org.slf4j.MarkerFactory;
 
 import java.lang.foreign.Arena;
+import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
 public class WebView implements Renderable {
@@ -53,9 +55,16 @@ public class WebView implements Renderable {
     // Tracks the last GUI scale we applied to the native view (used as hidpi_scale_factor).
     private int lastGuiScale = -1;
 
+    // Whether we asked the native Servo WebView to run in throttled (background) mode.
+    private boolean throttled;
+
     // WebRender uses raw OpenGL calls and can touch multiple texture units. Minecraft tracks its own
     // texture bindings and may skip redundant binds, so we must restore *all* units we might disturb.
     private static int TEXTURE_UNITS_TO_BACKUP = -1;
+
+    // Debug helpers (glGetError/glReadPixels) are extremely expensive and can stall the GPU.
+    // Opt-in via JVM system property: -Dxian.web.debug_gl=true
+    private static final boolean DEBUG_GL = Boolean.getBoolean("xian.web.debug_gl");
 
     private static int textureUnitsToBackup() {
         if (TEXTURE_UNITS_TO_BACKUP > 0) {
@@ -75,12 +84,22 @@ public class WebView implements Renderable {
 
     private boolean loggedFirstPaint;
     // Debug: sample a pixel for a few paints so we can see whether content ever changes from the clear color.
-    private int debugReadbackPaintsRemaining = 30;
+    private int debugReadbackPaintsRemaining = DEBUG_GL ? 30 : 0;
     private int debugReadbackFbo;
     // Debug: track load state transitions reported by the native webview.
-    private int debugLoadProbeFramesRemaining = 300;
+    private int debugLoadProbeFramesRemaining = DEBUG_GL ? 300 : 0;
     private int debugLastLoadStatus = Integer.MIN_VALUE;
     private String debugLastUrl;
+
+    // Reuse NIO buffers/arrays to avoid per-frame allocations in render().
+    private final IntBuffer tmpViewport = BufferUtils.createIntBuffer(4);
+    private final IntBuffer tmpScissorBox = BufferUtils.createIntBuffer(4);
+    private final ByteBuffer tmpColorMask = BufferUtils.createByteBuffer(4);
+    private final ByteBuffer tmpDepthMask = BufferUtils.createByteBuffer(1);
+    private final FloatBuffer tmpBlendColor = BufferUtils.createFloatBuffer(4);
+    private final ByteBuffer tmpReadbackRgba = BufferUtils.createByteBuffer(4);
+    private final int textureUnitsToBackupCount;
+    private final int[] tmpTexture2dByUnit;
 
     public WebView(int x, int y, int width, int height, float hidpi_scale_factor, String initial_url) throws Throwable {
         RenderSystem.assertOnRenderThread();
@@ -108,6 +127,9 @@ public class WebView implements Renderable {
         this.texture_id = this.view.texture_id();
         this.texture_location = Identifier.fromNamespaceAndPath("xian", "webview/" + this.texture_id);
 
+        this.textureUnitsToBackupCount = textureUnitsToBackup();
+        this.tmpTexture2dByUnit = new int[this.textureUnitsToBackupCount];
+
         this.x = x;
         this.y = y;
         this.width = logicalW;
@@ -133,6 +155,20 @@ public class WebView implements Renderable {
     public void move(int x, int y) {
         this.x = x;
         this.y = y;
+    }
+
+    public void setThrottled(boolean throttled) {
+        RenderSystem.assertOnRenderThread();
+        if (this.throttled == throttled) {
+            return;
+        }
+        try {
+            this.view.set_throttled(throttled);
+            this.throttled = throttled;
+            LOGGER.info(LOGGERMARKER, "Java WebView set throttled={} (texture_id={})", throttled, this.texture_id);
+        } catch (Throwable t) {
+            LOGGER.warn(LOGGERMARKER, "Failed to set throttled={} (texture_id={})", throttled, this.texture_id, t);
+        }
     }
 
     public void resize(int width, int height) {
@@ -220,15 +256,18 @@ public class WebView implements Renderable {
         // into the wrong framebuffer.
         int prevDrawFbo = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
         int prevReadFbo = GL11.glGetInteger(GL30.GL_READ_FRAMEBUFFER_BINDING);
-        IntBuffer prevViewport = BufferUtils.createIntBuffer(4);
+        IntBuffer prevViewport = this.tmpViewport;
+        prevViewport.clear();
         GL11.glGetIntegerv(GL11.GL_VIEWPORT, prevViewport);
         boolean prevCullFaceEnabled = GL11.glIsEnabled(GL11.GL_CULL_FACE);
         boolean prevDepthTestEnabled = GL11.glIsEnabled(GL11.GL_DEPTH_TEST);
         boolean prevStencilTestEnabled = GL11.glIsEnabled(GL11.GL_STENCIL_TEST);
         boolean prevScissorEnabled = GL11.glIsEnabled(GL11.GL_SCISSOR_TEST);
-        IntBuffer prevScissorBox = BufferUtils.createIntBuffer(4);
+        IntBuffer prevScissorBox = this.tmpScissorBox;
+        prevScissorBox.clear();
         GL11.glGetIntegerv(GL11.GL_SCISSOR_BOX, prevScissorBox);
-        var prevColorMask = BufferUtils.createByteBuffer(4);
+        var prevColorMask = this.tmpColorMask;
+        prevColorMask.clear();
         GL11.glGetBooleanv(GL11.GL_COLOR_WRITEMASK, prevColorMask);
         boolean prevColorMaskR = prevColorMask.get(0) != 0;
         boolean prevColorMaskG = prevColorMask.get(1) != 0;
@@ -239,14 +278,15 @@ public class WebView implements Renderable {
         int prevArrayBuffer = GL11.glGetInteger(GL15.GL_ARRAY_BUFFER_BINDING);
         int prevElementArrayBuffer = GL11.glGetInteger(GL15.GL_ELEMENT_ARRAY_BUFFER_BINDING);
         int prevActiveTexture = GL11.glGetInteger(GL13.GL_ACTIVE_TEXTURE);
-        int unitsToBackup = textureUnitsToBackup();
-        int[] prevTexture2dByUnit = new int[unitsToBackup];
+        int unitsToBackup = this.textureUnitsToBackupCount;
+        int[] prevTexture2dByUnit = this.tmpTexture2dByUnit;
         for (int i = 0; i < unitsToBackup; i++) {
             GL13.glActiveTexture(GL13.GL_TEXTURE0 + i);
             prevTexture2dByUnit[i] = GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
         }
         GL13.glActiveTexture(prevActiveTexture);
-        var prevDepthMaskBuf = BufferUtils.createByteBuffer(1);
+        var prevDepthMaskBuf = this.tmpDepthMask;
+        prevDepthMaskBuf.clear();
         GL11.glGetBooleanv(GL11.GL_DEPTH_WRITEMASK, prevDepthMaskBuf);
         boolean prevDepthMask = prevDepthMaskBuf.get(0) != 0;
         int prevStencilMask = GL11.glGetInteger(GL11.GL_STENCIL_WRITEMASK);
@@ -259,7 +299,8 @@ public class WebView implements Renderable {
         int prevBlendDstAlpha = GL11.glGetInteger(0x80CA /* GL_BLEND_DST_ALPHA */);
         int prevBlendEqRgb = GL11.glGetInteger(0x8009 /* GL_BLEND_EQUATION_RGB */);
         int prevBlendEqAlpha = GL11.glGetInteger(0x883D /* GL_BLEND_EQUATION_ALPHA */);
-        var prevBlendColor = BufferUtils.createFloatBuffer(4);
+        var prevBlendColor = this.tmpBlendColor;
+        prevBlendColor.clear();
         // Some LWJGL variants used by Minecraft do not expose GL14.GL_BLEND_COLOR, so use the raw enum.
         GL11.glGetFloatv(0x8005 /* GL_BLEND_COLOR */, prevBlendColor);
         float prevBlendColorR = prevBlendColor.get(0);
@@ -284,40 +325,44 @@ public class WebView implements Renderable {
         GL11.glScissor(0, 0, Math.max(1, this.deviceWidth), Math.max(1, this.deviceHeight));
 
         // Debug: observe whether the native side considers the page "loading" at all.
-        try {
-            if (this.debugLoadProbeFramesRemaining > 0) {
-                this.debugLoadProbeFramesRemaining--;
+        if (DEBUG_GL) {
+            try {
+                if (this.debugLoadProbeFramesRemaining > 0) {
+                    this.debugLoadProbeFramesRemaining--;
 
-                int status = this.view.load_status();
-                if (status != this.debugLastLoadStatus) {
-                    this.debugLastLoadStatus = status;
-                    String name = switch (status) {
-                        case Abi.XIAN_WEB_ENGINE_LOAD_STATUS_STARTED -> "Started";
-                        case Abi.XIAN_WEB_ENGINE_LOAD_STATUS_HEAD_PARSED -> "HeadParsed";
-                        case Abi.XIAN_WEB_ENGINE_LOAD_STATUS_COMPLETE -> "Complete";
-                        case Abi.XIAN_WEB_ENGINE_LOAD_STATUS_INVALID -> "Invalid";
-                        default -> "Unknown(" + status + ")";
-                    };
-                    LOGGER.info(LOGGERMARKER, "load_status={} ({}) (texture_id={})", status, name, this.texture_id);
-                }
+                    int status = this.view.load_status();
+                    if (status != this.debugLastLoadStatus) {
+                        this.debugLastLoadStatus = status;
+                        String name = switch (status) {
+                            case Abi.XIAN_WEB_ENGINE_LOAD_STATUS_STARTED -> "Started";
+                            case Abi.XIAN_WEB_ENGINE_LOAD_STATUS_HEAD_PARSED -> "HeadParsed";
+                            case Abi.XIAN_WEB_ENGINE_LOAD_STATUS_COMPLETE -> "Complete";
+                            case Abi.XIAN_WEB_ENGINE_LOAD_STATUS_INVALID -> "Invalid";
+                            default -> "Unknown(" + status + ")";
+                        };
+                        LOGGER.info(LOGGERMARKER, "load_status={} ({}) (texture_id={})", status, name, this.texture_id);
+                    }
 
-                String url = this.view.url();
-                if (url != null && !url.equals(this.debugLastUrl)) {
-                    this.debugLastUrl = url;
-                    LOGGER.info(LOGGERMARKER, "current_url={} (texture_id={})", url, this.texture_id);
-                }
+                    String url = this.view.url();
+                    if (url != null && !url.equals(this.debugLastUrl)) {
+                        this.debugLastUrl = url;
+                        LOGGER.info(LOGGERMARKER, "current_url={} (texture_id={})", url, this.texture_id);
+                    }
 
-                if (status == Abi.XIAN_WEB_ENGINE_LOAD_STATUS_COMPLETE && this.debugLastUrl != null) {
-                    this.debugLoadProbeFramesRemaining = 0;
+                    if (status == Abi.XIAN_WEB_ENGINE_LOAD_STATUS_COMPLETE && this.debugLastUrl != null) {
+                        this.debugLoadProbeFramesRemaining = 0;
+                    }
                 }
+            } catch (Throwable t) {
+                LOGGER.warn(LOGGERMARKER, "Failed to query load status/url (texture_id={})", this.texture_id, t);
             }
-        } catch (Throwable t) {
-            LOGGER.warn(LOGGERMARKER, "Failed to query load status/url (texture_id={})", this.texture_id, t);
         }
 
         // Clear any pre-existing GL error so we can attribute errors to WebRender more confidently.
-        while (GL11.glGetError() != GL11.GL_NO_ERROR) {
-            // drain
+        if (DEBUG_GL) {
+            while (GL11.glGetError() != GL11.GL_NO_ERROR) {
+                // drain
+            }
         }
 
         boolean painted = false;
@@ -332,16 +377,18 @@ public class WebView implements Renderable {
                 }
             }
 
-            // Log GL errors (often indicates state/attachment mismatches that make WebRender draw nothing).
-            int err;
-            boolean anyErr = false;
-            while ((err = GL11.glGetError()) != GL11.GL_NO_ERROR) {
-                anyErr = true;
-                LOGGER.warn(LOGGERMARKER, "GL error after paint: 0x{} (texture_id={})", Integer.toHexString(err), this.texture_id);
-            }
-            if (anyErr) {
-                // Avoid spamming forever.
-                this.debugReadbackPaintsRemaining = 0;
+            if (DEBUG_GL) {
+                // Log GL errors (often indicates state/attachment mismatches that make WebRender draw nothing).
+                int err;
+                boolean anyErr = false;
+                while ((err = GL11.glGetError()) != GL11.GL_NO_ERROR) {
+                    anyErr = true;
+                    LOGGER.warn(LOGGERMARKER, "GL error after paint: 0x{} (texture_id={})", Integer.toHexString(err), this.texture_id);
+                }
+                if (anyErr) {
+                    // Avoid spamming forever.
+                    this.debugReadbackPaintsRemaining = 0;
+                }
             }
         } catch (Throwable t) {
             LOGGER.error(LOGGERMARKER, "Failed to paint (texture_id={})", this.texture_id, t);
@@ -425,6 +472,9 @@ public class WebView implements Renderable {
     }
 
     private int debugLogCenterPixel() {
+        if (!DEBUG_GL) {
+            return 0;
+        }
         // Debug helper: read back a single pixel from the center of the texture to verify that
         // Servo/WebRender actually wrote something (helps distinguish "paint OK but draw path broken").
         try {
@@ -471,7 +521,8 @@ public class WebView implements Renderable {
 
             int cx = texW / 2;
             int cy = texH / 2;
-            var buf = BufferUtils.createByteBuffer(4);
+            var buf = this.tmpReadbackRgba;
+            buf.clear();
             GL11.glReadBuffer(GL30.GL_COLOR_ATTACHMENT0);
             GL11.glReadPixels(cx, cy, 1, 1, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, buf);
             int r = buf.get(0) & 0xFF;

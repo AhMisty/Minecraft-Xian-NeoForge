@@ -46,6 +46,10 @@ public final class View {
         return (boolean) Abi.view_set_hidpi_scale_factor.invokeExact(handle, hidpi_scale_factor);
     }
 
+    public void set_throttled(boolean throttled) throws Throwable {
+        Abi.view_set_throttled.invokeExact(handle, throttled);
+    }
+
     public int texture_id() throws Throwable {
         return (int) Abi.view_texture_id.invokeExact(handle);
     }

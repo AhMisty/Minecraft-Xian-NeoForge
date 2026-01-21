@@ -47,7 +47,7 @@ public abstract class ModListScreenMixin_InfoPanel extends ScrollPanel {
                         this.height,
                         4,
                         // Use base64 to avoid any data: URL decoding edge-cases.
-                        "https://example.com/"
+                        "xian://benchmark.html"
                 );
                 LOGGER.info(LOGGERMARKER, "Created WebView for ModList InfoPanel (texture_id={})", xian$webview.texture_id);
             } catch (Throwable t) {

@@ -16,7 +16,7 @@ public final class Abi {
         }
     }
 
-    public static final int XIAN_WEB_ENGINE_ABI_VERSION = 1;
+    public static final int XIAN_WEB_ENGINE_ABI_VERSION = 3;
 
     public static final int XIAN_WEB_ENGINE_GL_API_GL = 1;
     public static final int XIAN_WEB_ENGINE_GL_API_GLES = 2;
@@ -117,6 +117,8 @@ public final class Abi {
             LIBRARY.loadFunctionCritical("xian_web_engine_set_resources_dir", FunctionDescriptor.of(ValueLayout.JAVA_BOOLEAN, ValueLayout.ADDRESS));
     public static final MethodHandle set_config_dir =
             LIBRARY.loadFunctionCritical("xian_web_engine_set_config_dir", FunctionDescriptor.of(ValueLayout.JAVA_BOOLEAN, ValueLayout.ADDRESS));
+    public static final MethodHandle set_web_root_dir =
+            LIBRARY.loadFunctionCritical("xian_web_engine_set_web_root_dir", FunctionDescriptor.of(ValueLayout.JAVA_BOOLEAN, ValueLayout.ADDRESS));
     public static final MethodHandle set_thread_pool_cap =
             LIBRARY.loadFunctionCritical("xian_web_engine_set_thread_pool_cap", FunctionDescriptor.of(ValueLayout.JAVA_BOOLEAN, ValueLayout.JAVA_INT));
 
@@ -143,6 +145,8 @@ public final class Abi {
             LIBRARY.loadFunctionCritical("xian_web_engine_view_resize", FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.JAVA_INT, ValueLayout.JAVA_INT));
     public static final MethodHandle view_set_hidpi_scale_factor =
             LIBRARY.loadFunctionCritical("xian_web_engine_view_set_hidpi_scale_factor", FunctionDescriptor.of(ValueLayout.JAVA_BOOLEAN, ValueLayout.ADDRESS, ValueLayout.JAVA_FLOAT));
+    public static final MethodHandle view_set_throttled =
+            LIBRARY.loadFunctionCritical("xian_web_engine_view_set_throttled", FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.JAVA_BOOLEAN));
     public static final MethodHandle view_texture_id =
             LIBRARY.loadFunctionCritical("xian_web_engine_view_texture_id", FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS));
     public static final MethodHandle view_paint =

@@ -18,10 +18,38 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.Marker;
 import org.slf4j.MarkerFactory;
 
+import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
 @EventBusSubscriber(modid = ExampleMod.MODID, value = Dist.CLIENT)
 public class WebEngineTicker {
+    // Reuse NIO buffers/arrays to avoid per-frame allocations in onTick().
+    private static final IntBuffer TMP_VIEWPORT = BufferUtils.createIntBuffer(4);
+    private static final IntBuffer TMP_SCISSOR_BOX = BufferUtils.createIntBuffer(4);
+    private static final ByteBuffer TMP_COLOR_MASK = BufferUtils.createByteBuffer(4);
+    private static final ByteBuffer TMP_DEPTH_MASK = BufferUtils.createByteBuffer(1);
+    private static final FloatBuffer TMP_BLEND_COLOR = BufferUtils.createFloatBuffer(4);
+    private static final int[] TMP_TEXTURE2D_BY_UNIT = new int[16];
+
+    private static int TEXTURE_UNITS_TO_BACKUP = -1;
+
+    private static int textureUnitsToBackup() {
+        if (TEXTURE_UNITS_TO_BACKUP > 0) {
+            return TEXTURE_UNITS_TO_BACKUP;
+        }
+        int max = 1;
+        try {
+            max = GL11.glGetInteger(0x8B4D /* GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS */);
+        } catch (Throwable ignored) {
+        }
+        if (max <= 0) {
+            max = 1;
+        }
+        TEXTURE_UNITS_TO_BACKUP = Math.min(max, 16);
+        return TEXTURE_UNITS_TO_BACKUP;
+    }
+
     private static final Marker LOGGERMARKER = MarkerFactory.getMarker("WebEngineTicker");
     private static final Logger LOGGER = LoggerFactory.getLogger("仙");
 
@@ -36,20 +64,24 @@ public class WebEngineTicker {
         // Minecraft will render the rest of the frame with the wrong blend/framebuffer/etc state.
         int prevDrawFbo = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
         int prevReadFbo = GL11.glGetInteger(GL30.GL_READ_FRAMEBUFFER_BINDING);
-        IntBuffer prevViewport = BufferUtils.createIntBuffer(4);
+        IntBuffer prevViewport = TMP_VIEWPORT;
+        prevViewport.clear();
         GL11.glGetIntegerv(GL11.GL_VIEWPORT, prevViewport);
         boolean prevDepthTestEnabled = GL11.glIsEnabled(GL11.GL_DEPTH_TEST);
         boolean prevStencilTestEnabled = GL11.glIsEnabled(GL11.GL_STENCIL_TEST);
         boolean prevScissorEnabled = GL11.glIsEnabled(GL11.GL_SCISSOR_TEST);
-        IntBuffer prevScissorBox = BufferUtils.createIntBuffer(4);
+        IntBuffer prevScissorBox = TMP_SCISSOR_BOX;
+        prevScissorBox.clear();
         GL11.glGetIntegerv(GL11.GL_SCISSOR_BOX, prevScissorBox);
-        var prevColorMask = BufferUtils.createByteBuffer(4);
+        var prevColorMask = TMP_COLOR_MASK;
+        prevColorMask.clear();
         GL11.glGetBooleanv(GL11.GL_COLOR_WRITEMASK, prevColorMask);
         boolean prevColorMaskR = prevColorMask.get(0) != 0;
         boolean prevColorMaskG = prevColorMask.get(1) != 0;
         boolean prevColorMaskB = prevColorMask.get(2) != 0;
         boolean prevColorMaskA = prevColorMask.get(3) != 0;
-        var prevDepthMaskBuf = BufferUtils.createByteBuffer(1);
+        var prevDepthMaskBuf = TMP_DEPTH_MASK;
+        prevDepthMaskBuf.clear();
         GL11.glGetBooleanv(GL11.GL_DEPTH_WRITEMASK, prevDepthMaskBuf);
         boolean prevDepthMask = prevDepthMaskBuf.get(0) != 0;
         int prevStencilMask = GL11.glGetInteger(GL11.GL_STENCIL_WRITEMASK);
@@ -62,7 +94,8 @@ public class WebEngineTicker {
         int prevBlendDstAlpha = GL11.glGetInteger(0x80CA /* GL_BLEND_DST_ALPHA */);
         int prevBlendEqRgb = GL11.glGetInteger(0x8009 /* GL_BLEND_EQUATION_RGB */);
         int prevBlendEqAlpha = GL11.glGetInteger(0x883D /* GL_BLEND_EQUATION_ALPHA */);
-        var prevBlendColor = BufferUtils.createFloatBuffer(4);
+        var prevBlendColor = TMP_BLEND_COLOR;
+        prevBlendColor.clear();
         // Some LWJGL variants used by Minecraft do not expose GL14.GL_BLEND_COLOR, so use the raw enum.
         GL11.glGetFloatv(0x8005 /* GL_BLEND_COLOR */, prevBlendColor);
         float prevBlendColorR = prevBlendColor.get(0);
@@ -75,16 +108,8 @@ public class WebEngineTicker {
         int prevArrayBuffer = GL11.glGetInteger(GL15.GL_ARRAY_BUFFER_BINDING);
         int prevElementArrayBuffer = GL11.glGetInteger(GL15.GL_ELEMENT_ARRAY_BUFFER_BINDING);
         int prevActiveTexture = GL11.glGetInteger(GL13.GL_ACTIVE_TEXTURE);
-        int unitsToBackup = 1;
-        try {
-            unitsToBackup = GL11.glGetInteger(0x8B4D /* GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS */);
-        } catch (Throwable ignored) {
-        }
-        if (unitsToBackup <= 0) {
-            unitsToBackup = 1;
-        }
-        unitsToBackup = Math.min(unitsToBackup, 16);
-        int[] prevTexture2dByUnit = new int[unitsToBackup];
+        int unitsToBackup = textureUnitsToBackup();
+        int[] prevTexture2dByUnit = TMP_TEXTURE2D_BY_UNIT;
         for (int i = 0; i < unitsToBackup; i++) {
             GL13.glActiveTexture(GL13.GL_TEXTURE0 + i);
             prevTexture2dByUnit[i] = GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
